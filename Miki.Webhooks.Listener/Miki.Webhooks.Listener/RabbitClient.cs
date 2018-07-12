@@ -57,8 +57,7 @@ namespace Miki.Webhooks.Listener
 
 			var consumer = new EventingBasicConsumer(model);
 			consumer.Received += async (ch, ea) => await OnMessageReceived(ch, ea);
-
-			string consumerTag = model.BasicConsume("", false, consumer);
+			string consumerTag = model.BasicConsume(QueueName, false, consumer);
 		}
 
 		private async Task OnMessageReceived(object channel, BasicDeliverEventArgs args)
@@ -76,6 +75,8 @@ namespace Miki.Webhooks.Listener
 				model.BasicReject(args.DeliveryTag, false);
 				return;
 			}
+
+			Log.Message(resp.auth_code + " | received");
 
 
 			try
