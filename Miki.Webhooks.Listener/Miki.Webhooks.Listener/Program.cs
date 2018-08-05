@@ -21,7 +21,8 @@ namespace Miki.Webhooks.Listener
 
 		static void Main(string[] args)
         {
-			new Program().MainAsync().GetAwaiter().GetResult();
+			new Program().MainAsync()
+				.GetAwaiter().GetResult();
 		}
 
 		async Task MainAsync()
@@ -31,7 +32,9 @@ namespace Miki.Webhooks.Listener
 			configuration.RegisterType(this);
 			configuration.RegisterType(client);
 
-			AddWebhookEvent(client, new DblVoteEvent());
+			redisClient = new StackExchangeRedisCacheClient(new NewtonsoftSerializer(), RedisUrl);
+
+			AddWebhookEvent(client, new DblVoteEvent(redisClient));
 
 			if (File.Exists("./config.json"))
 			{

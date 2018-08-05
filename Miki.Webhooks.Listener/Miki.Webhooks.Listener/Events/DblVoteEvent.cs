@@ -4,6 +4,7 @@ using Miki.Rest;
 using Miki.Webhooks.Listener.Exceptions;
 using Miki.Webhooks.Listener.Models;
 using Newtonsoft.Json;
+using StackExchange.Redis.Extensions.Core;
 using StatsdClient;
 using System;
 using System.Collections.Generic;
@@ -38,8 +39,14 @@ namespace Miki.Webhooks.Listener.Events
         [Configurable]
         public string ApiAuthorization { get; set; } = "password";
 
+		private ICacheClient redisClient;
         public string[] AcceptedAuthCodes 
 			=> new[]{ "DBL_VOTE" };
+
+		public DblVoteEvent(ICacheClient cacheClient)
+		{
+			redisClient = cacheClient;
+		}
 
 		public async Task OnMessage(WebhookResponse response)
 		{
@@ -52,9 +59,10 @@ namespace Miki.Webhooks.Listener.Events
 					User u = await context.Users.FindAsync(voteObject.UserId);
 
 					if (!await RedisClient.ExistsAsync($"dbl:vote:{voteObject.UserId}"))
+					if (!await redisClient.ExistsAsync($"dbl:vote:{voteObject.UserId}"))
 					{
 						u.DblVotes++;
-						//await Global.RedisClient.AddAsync($"dbl:vote:{voteObject.UserId}", 1, new TimeSpan(1, 0, 0, 0));
+						await redisClient.AddAsync($"dbl:vote:{voteObject.UserId}", 1, new TimeSpan(1, 0, 0, 0));
 
 						int addedCurrency = 100 * ((await u.IsDonatorAsync(context)) ? 2 : 1);
 
