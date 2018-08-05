@@ -77,7 +77,6 @@ namespace Miki.Webhooks.Listener
 				return;
 			}
 
-
 			try
 			{
 				foreach (IWebhookEvent webhook in webhookEvents)

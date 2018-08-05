@@ -1,11 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27428.2043
+VisualStudioVersion = 15.0.27130.2010
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Miki.Webhooks.Listener", "Miki.Webhooks.Listener\Miki.Webhooks.Listener.csproj", "{3CF5066D-90E2-44EA-80A5-252C230C690C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Miki.Configuration", "..\..\Miki.Configuration\Miki.Configuration.csproj", "{10A295FC-4B67-4B82-AB38-AF12B37FDB21}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Miki.Configuration", "..\..\Miki.Configuration\Miki.Configuration.csproj", "{87EBB073-DB8C-4548-90F6-EC287A9A120A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +17,10 @@ Global
 		{3CF5066D-90E2-44EA-80A5-252C230C690C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3CF5066D-90E2-44EA-80A5-252C230C690C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3CF5066D-90E2-44EA-80A5-252C230C690C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{10A295FC-4B67-4B82-AB38-AF12B37FDB21}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{10A295FC-4B67-4B82-AB38-AF12B37FDB21}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{10A295FC-4B67-4B82-AB38-AF12B37FDB21}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{10A295FC-4B67-4B82-AB38-AF12B37FDB21}.Release|Any CPU.Build.0 = Release|Any CPU
+		{87EBB073-DB8C-4548-90F6-EC287A9A120A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{87EBB073-DB8C-4548-90F6-EC287A9A120A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{87EBB073-DB8C-4548-90F6-EC287A9A120A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{87EBB073-DB8C-4548-90F6-EC287A9A120A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

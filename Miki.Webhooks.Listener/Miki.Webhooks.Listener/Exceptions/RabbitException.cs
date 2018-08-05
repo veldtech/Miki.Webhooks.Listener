@@ -4,7 +4,14 @@ using System.Text;
 
 namespace Miki.Webhooks.Listener.Exceptions
 {
-    class RabbitException : Exception
+    public class RabbitException : Exception
     {
+		public bool CanRetry { get; private set; }
+
+		public RabbitException(string message, bool canRetry)
+			: base(message)
+		{
+			CanRetry = canRetry;
+		}
     }
 }

@@ -38,7 +38,6 @@ namespace Miki.Webhooks.Listener.Events
         [Configurable]
         public string ApiAuthorization { get; set; } = "password";
 
-
         public string[] AcceptedAuthCodes 
 			=> new[]{ "DBL_VOTE" };
 
@@ -52,7 +51,7 @@ namespace Miki.Webhooks.Listener.Events
 				{
 					User u = await context.Users.FindAsync(voteObject.UserId);
 
-					if (!await Global.RedisClient.ExistsAsync($"dbl:vote:{voteObject.UserId}"))
+					if (!await RedisClient.ExistsAsync($"dbl:vote:{voteObject.UserId}"))
 					{
 						u.DblVotes++;
 						//await Global.RedisClient.AddAsync($"dbl:vote:{voteObject.UserId}", 1, new TimeSpan(1, 0, 0, 0));

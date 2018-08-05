@@ -16,8 +16,6 @@ namespace Miki.Webhooks.Listener
 
 		RabbitClient client = new RabbitClient();
 
-		public StackExchangeRedisCacheClient redisClient;
-
 		[Configurable]
 		public string RedisUrl { get; set; } = "localhost";
 
@@ -45,8 +43,6 @@ namespace Miki.Webhooks.Listener
 			await configuration.ExportAsync(
 				new JsonSerializationProvider(),
 				"./config.json");
-
-			redisClient = new StackExchangeRedisCacheClient(new NewtonsoftSerializer(), RedisUrl);
 
 			client.Connect();
 
