@@ -44,6 +44,11 @@ namespace Miki.Webhooks.Listener
 
 		public async Task OnMessage(string json)
 		{
+			if(json.StartsWith("data="))
+			{
+				json = json.Substring(5);
+			}
+
 			KofiObject kofi = JsonConvert.DeserializeObject<KofiObject>(json);
 			int rewardedKeys = (int)Math.Floor(kofi.Amount / 3);
 
