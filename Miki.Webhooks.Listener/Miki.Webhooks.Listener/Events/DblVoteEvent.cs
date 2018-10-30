@@ -50,7 +50,7 @@ namespace Miki.Webhooks.Listener.Events
 				{
 					User u = await context.Users.FindAsync((long)voteObject.UserId);
 
-					if (await redisClient.ExistsAsync($"dbl:vote:{voteObject.UserId}"))
+					if (!await redisClient.ExistsAsync($"dbl:vote:{voteObject.UserId}"))
 					{
 						u.DblVotes++;
 						await redisClient.UpsertAsync($"dbl:vote:{voteObject.UserId}", 1, new TimeSpan(1, 0, 0, 0));
