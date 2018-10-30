@@ -7,10 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Miki.Webhooks.Listener", "M
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Miki.Bot.Models", "Miki.Models\Miki.Bot.Models.csproj", "{1B34FF31-C06C-4058-AB0D-855E81F85E39}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Miki.Discord.Rest", "..\..\Miki.Discord\Miki.Discord.Rest\Miki.Discord.Rest.csproj", "{1DFFD053-82DB-4F53-BE25-A76AECE3BEB4}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Miki.Discord.Common", "..\..\Miki.Discord\Miki.Discord.Common\Miki.Discord.Common.csproj", "{AF6DB1DB-ECCF-4D43-95DE-A5CD82933B9F}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -25,14 +21,6 @@ Global
 		{1B34FF31-C06C-4058-AB0D-855E81F85E39}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1B34FF31-C06C-4058-AB0D-855E81F85E39}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1B34FF31-C06C-4058-AB0D-855E81F85E39}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1DFFD053-82DB-4F53-BE25-A76AECE3BEB4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1DFFD053-82DB-4F53-BE25-A76AECE3BEB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1DFFD053-82DB-4F53-BE25-A76AECE3BEB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1DFFD053-82DB-4F53-BE25-A76AECE3BEB4}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AF6DB1DB-ECCF-4D43-95DE-A5CD82933B9F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AF6DB1DB-ECCF-4D43-95DE-A5CD82933B9F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AF6DB1DB-ECCF-4D43-95DE-A5CD82933B9F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AF6DB1DB-ECCF-4D43-95DE-A5CD82933B9F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
