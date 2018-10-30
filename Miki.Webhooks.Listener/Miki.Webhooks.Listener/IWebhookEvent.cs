@@ -4,8 +4,8 @@ namespace Miki.Webhooks.Listener
 {
     public interface IWebhookEvent
     {
-		string[] AcceptedAuthCodes { get; }
+		string[] AcceptedUrls { get; }
 
-		Task OnMessage(WebhookResponse response);
+		Task OnMessage(string json);
     }
 }

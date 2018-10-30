@@ -1,11 +1,9 @@
-﻿using Miki.Configuration;
+﻿using Miki.Cache;
+using Miki.Configuration;
+using Miki.Discord;
 using Miki.Models;
-using Miki.Rest;
-using Miki.Webhooks.Listener.Exceptions;
-using Miki.Webhooks.Listener.Models;
 using Newtonsoft.Json;
-using StackExchange.Redis.Extensions.Core;
-using StatsdClient;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -31,46 +29,37 @@ namespace Miki.Webhooks.Listener.Events
 		public int MekosGiven { get; set; } = 100;
 
 		[Configurable]
-		public float DonatorModifier { get; set; } = 2.0f;
+		public int DonatorModifier { get; set; } = 2;
 
-        [Configurable]
-        public string ApiUrl { get; set; } = "localhost";
-
-        [Configurable]
-        public string ApiAuthorization { get; set; } = "password";
+		public string[] AcceptedUrls => new[] { "dbl_vote" };
 
 		private ICacheClient redisClient;
-
-        public string[] AcceptedAuthCodes 
-			=> new[]{ "DBL_VOTE" };
 
 		public DblVoteEvent(ICacheClient cacheClient)
 		{
 			redisClient = cacheClient;
 		}
 
-		public async Task OnMessage(WebhookResponse response)
+		public async Task OnMessage(string json)
 		{
-			using (var context = new MikiContext())
+			using (var context = new WebhookContext())
 			{
-				DblVoteObject voteObject = response.data.ToObject<DblVoteObject>();
+				DblVoteObject voteObject = JsonConvert.DeserializeObject<DblVoteObject>(json);
 
 				if (voteObject.Type == "upvote")
 				{
-					User u = await context.Users.FindAsync(voteObject.UserId);
+					User u = await context.Users.FindAsync((long)voteObject.UserId);
 
-					if (!await redisClient.ExistsAsync($"dbl:vote:{voteObject.UserId}"))
+					if (await redisClient.ExistsAsync($"dbl:vote:{voteObject.UserId}"))
 					{
 						u.DblVotes++;
-						await redisClient.AddAsync($"dbl:vote:{voteObject.UserId}", 1, new TimeSpan(1, 0, 0, 0));
+						await redisClient.UpsertAsync($"dbl:vote:{voteObject.UserId}", 1, new TimeSpan(1, 0, 0, 0));
 
-						int addedCurrency = 100 * ((await u.IsDonatorAsync(context)) ? 2 : 1);
+						int addedCurrency = 100 * (await u.IsDonatorAsync(context) ? DonatorModifier : 1);
 
 						u.Currency += addedCurrency;
 
-						DogStatsd.Increment("votes.dbl");
-
-						Achievement achievement = await context.Achievements.FindAsync("voter", u.Id);
+						Achievement achievement = await context.Achievements.FindAsync(u.Id, "voter");
 						bool unlockedAchievement = false;
 
 						switch (u.DblVotes)
@@ -101,15 +90,23 @@ namespace Miki.Webhooks.Listener.Events
 							break;
 						}
 
+						var channel = await Program.Discord.CreateDMChannelAsync(voteObject.UserId);
+						if (channel != null)
+						{
+							await Program.Discord.SendMessageAsync(channel.Id, new Discord.Common.MessageArgs
+							{
+								embed = new EmbedBuilder()
+									.SetTitle("🎉 Thank you for voting!")
+									.SetDescription($"You have been granted 🔸{addedCurrency}")
+									.SetColor(221, 46, 68)
+									.ToEmbed()
+							});
+						}
+
 						await context.SaveChangesAsync();
 					}
 				}
 			}
-
-			var client = new RestClient(ApiUrl)
-				.SetAuthorization(ApiAuthorization);
-
-			await client.PostAsync("api/users/121919449996460033/messages", "{\"content\": \"yo.\"}");
 		}
 	}
 }

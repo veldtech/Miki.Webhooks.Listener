@@ -1,63 +1,53 @@
-﻿using Miki.Configuration;
+﻿using Miki.Cache;
+using Miki.Cache.StackExchange;
+using Miki.Discord.Rest;
 using Miki.Logging;
+using Miki.Serialization.Protobuf;
 using Miki.Webhooks.Listener.Events;
-using RabbitMQ.Client;
-using StackExchange.Redis.Extensions.Core;
-using StackExchange.Redis.Extensions.Newtonsoft;
+using Newtonsoft.Json;
+using StackExchange.Redis;
 using System;
 using System.IO;
 using System.Threading.Tasks;
 
 namespace Miki.Webhooks.Listener
 {
-    class Program
+	class Program
     {
-		ConfigurationManager configuration = new ConfigurationManager();
+		public static WebhookConfiguration Configurations;
+		public static DiscordApiClient Discord;
 
-		RabbitClient client = new RabbitClient();
-
-		public StackExchangeRedisCacheClient redisClient;
-
-		[Configurable]
-		public string RedisUrl { get; set; } = "localhost";
-
-		static void Main(string[] args)
-        {
-			new Program().MainAsync()
-				.GetAwaiter().GetResult();
-		}
-
-		async Task MainAsync()
+		public static async Task Main(string[] args)
 		{
-			Log.OnLog += (msg, level) => Console.WriteLine(msg);
-
-			configuration.RegisterType(this);
-			configuration.RegisterType(client);
-
-			redisClient = new StackExchangeRedisCacheClient(new NewtonsoftSerializer(), RedisUrl);
-
-			AddWebhookEvent(client, new DblVoteEvent(redisClient));
-
-			if (File.Exists("./config.json"))
+			if(!File.Exists("./database.json"))
 			{
-				await configuration.ImportAsync(
-					new JsonSerializationProvider(),
-					"./config.json");
+				using (var sw = File.CreateText("./database.json"))
+				{
+					string s = JsonConvert.SerializeObject(new WebhookConfiguration());
+					await sw.WriteAsync(s);
+					sw.Close();
+				}
 			}
 
-			await configuration.ExportAsync(
-				new JsonSerializationProvider(),
-				"./config.json");
+			Configurations = JsonConvert.DeserializeObject<WebhookConfiguration>(await File.ReadAllTextAsync("./database.json"));
 
-			client.Connect();
+			Log.OnLog += (msg, level) => Console.WriteLine(msg);
 
-			Log.Message("running!");
-		}
+			WebhookServer server = new WebhookServer(Configurations.AuthenticationString);
 
-		void AddWebhookEvent(RabbitClient client, IWebhookEvent ev)
-		{
-			configuration.RegisterType(ev.GetType(), ev);
-			client.AddWebhookEvent(ev);
+			ICacheClient redisClient = new StackExchangeCacheClient(
+				new ProtobufSerializer(), 
+				await ConnectionMultiplexer.ConnectAsync(Configurations.RedisConnectionString)
+			);
+
+			Discord = new DiscordApiClient(Configurations.BotToken, redisClient);
+
+			server.AddWebhookRoute(new TestEvent());
+			server.AddWebhookRoute(new PatreonPaymentEvent());
+			server.AddWebhookRoute(new DblVoteEvent(redisClient));
+			server.AddWebhookRoute(new KofiPaymentEvent());
+
+			await server.RunAsync();
 		}
 	}
 }

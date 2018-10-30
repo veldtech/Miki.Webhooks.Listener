@@ -1,29 +1,27 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Miki.Bot.Models;
 using Miki.Configuration;
 using Miki.Models;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Miki.Webhooks.Listener.Models
+namespace Miki.Webhooks.Listener
 {
-    public class MikiContext : DbContext
+	public class WebhookContext : MikiDbContext
 	{
-		[Configurable]
-		public string ConnectionString { get; set; }
-
 		public DbSet<Achievement> Achievements { get; set; }
-		public DbSet<IsDonator> IsDonator { get; set; }
+		public DbSet<DonatorKey> DonatorKey { get; set; }
 		public DbSet<User> Users { get; set; }
 
-		public MikiContext()
-		: base()
-		{ }
+		public WebhookContext()
+		{
+		}
 
 		protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 		{
-			optionsBuilder.UseNpgsql(ConnectionString);
 			base.OnConfiguring(optionsBuilder);
+			optionsBuilder.UseNpgsql(Program.Configurations.DatabaseConnectionString);
 		}
 	}
 }
