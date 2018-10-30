@@ -71,7 +71,10 @@ namespace Miki.Webhooks.Listener
 			var host = new WebHostBuilder()
 				.UseKestrel()
 				.UseUrls(urls)
-				.Configure(app => app.Map("/submit", SubmissionHandler).Map("/ping", PingHandler))
+				.Configure(
+					app => app.Map("/submit", SubmissionHandler)
+						.Map("/ping", PingHandler)
+				)
 				.Build();
 
 			host.Run();
@@ -128,6 +131,8 @@ namespace Miki.Webhooks.Listener
 				byte[] streamBytes = new byte[context.Request.ContentLength.Value];
 				await context.Request.Body.ReadAsync(streamBytes, 0, streamBytes.Length);
 				string json = Encoding.UTF8.GetString(streamBytes);
+
+				Log.Debug($"Webhook accepted with type '{type}' with data '{json}'.");
 
 				try
 				{
