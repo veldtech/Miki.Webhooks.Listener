@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace Miki.Webhooks.Listener
 {
@@ -130,7 +131,7 @@ namespace Miki.Webhooks.Listener
 
 				byte[] streamBytes = new byte[context.Request.ContentLength.Value];
 				await context.Request.Body.ReadAsync(streamBytes, 0, streamBytes.Length);
-				string json = Encoding.UTF8.GetString(streamBytes);
+				string json = HttpUtility.UrlDecode(Encoding.UTF8.GetString(streamBytes));
 
 				Log.Debug($"Webhook accepted with type '{type}' with data '{json}'.");
 
