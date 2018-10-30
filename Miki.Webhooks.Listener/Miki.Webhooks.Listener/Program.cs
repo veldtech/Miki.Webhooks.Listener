@@ -47,7 +47,7 @@ namespace Miki.Webhooks.Listener
 			server.AddWebhookRoute(new DblVoteEvent(redisClient));
 			server.AddWebhookRoute(new KofiPaymentEvent());
 
-			await server.RunAsync();
+			await server.RunAsync(Configurations.Urls);
 		}
 	}
 }

@@ -10,5 +10,6 @@ namespace Miki.Webhooks.Listener
 		public string DatabaseConnectionString { get; set; } = "Server=localhost;";
 		public string AuthenticationString { get; set; } = "password";
 		public string BotToken { get; set; } = "";
+		public string[] Urls { get; set; } = new[] { "http://localhost:5000", "https://localhost:5001" };
 	}
 }

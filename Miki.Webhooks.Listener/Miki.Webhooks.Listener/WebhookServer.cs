@@ -55,7 +55,7 @@ namespace Miki.Webhooks.Listener
 			}
 		}
 
-		public async Task RunAsync()
+		public async Task RunAsync(string[] urls)
 		{
 			if (File.Exists("./config.json"))
 			{
@@ -70,6 +70,7 @@ namespace Miki.Webhooks.Listener
 
 			var host = new WebHostBuilder()
 				.UseKestrel()
+				.UseUrls(urls)
 				.Configure(app => app.Map("/submit", SubmissionHandler).Map("/ping", PingHandler))
 				.Build();
 
