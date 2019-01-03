@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Miki.Configuration;
 using Miki.Logging;
 using Newtonsoft.Json;
+using Sentry;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -78,7 +79,7 @@ namespace Miki.Webhooks.Listener
 				)
 				.Build();
 
-			host.Run();
+			await host.RunAsync();
 		}
 
 		private void PingHandler(IApplicationBuilder app)
@@ -141,6 +142,7 @@ namespace Miki.Webhooks.Listener
 				}
 				catch(Exception e)
 				{
+                    SentrySdk.CaptureException(e);
 					Log.Error(e);
 				}
 

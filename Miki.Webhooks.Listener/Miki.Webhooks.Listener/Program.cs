@@ -5,6 +5,7 @@ using Miki.Logging;
 using Miki.Serialization.Protobuf;
 using Miki.Webhooks.Listener.Events;
 using Newtonsoft.Json;
+using Sentry;
 using StackExchange.Redis;
 using System;
 using System.IO;
@@ -31,23 +32,29 @@ namespace Miki.Webhooks.Listener
 
 			Configurations = JsonConvert.DeserializeObject<WebhookConfiguration>(await File.ReadAllTextAsync("./database.json"));
 
-			Log.OnLog += (msg, level) => Console.WriteLine(msg);
+            using (SentrySdk.Init(Configurations.SentryDsn))
+            {
+                new LogBuilder()
+                    .SetLogHeader((lvl) => $"[{lvl}][{DateTime.UtcNow.ToLongTimeString()}]")
+                    .AddLogEvent((msg, level) => Console.WriteLine(msg))
+                    .Apply();
 
-			WebhookServer server = new WebhookServer(Configurations.AuthenticationString);
+                WebhookServer server = new WebhookServer(Configurations.AuthenticationString);
 
-			ICacheClient redisClient = new StackExchangeCacheClient(
-				new ProtobufSerializer(), 
-				await ConnectionMultiplexer.ConnectAsync(Configurations.RedisConnectionString)
-			);
+                ICacheClient redisClient = new StackExchangeCacheClient(
+                    new ProtobufSerializer(),
+                    await ConnectionMultiplexer.ConnectAsync(Configurations.RedisConnectionString)
+                );
 
-			Discord = new DiscordApiClient(Configurations.BotToken, redisClient);
+                Discord = new DiscordApiClient(Configurations.BotToken, redisClient);
 
-			server.AddWebhookRoute(new TestEvent());
-			server.AddWebhookRoute(new PatreonPaymentEvent());
-			server.AddWebhookRoute(new DblVoteEvent(redisClient));
-			server.AddWebhookRoute(new KofiPaymentEvent());
+                server.AddWebhookRoute(new TestEvent());
+                server.AddWebhookRoute(new PatreonPaymentEvent());
+                server.AddWebhookRoute(new DblVoteEvent(redisClient));
+                server.AddWebhookRoute(new KofiPaymentEvent());
 
-			await server.RunAsync(Configurations.Urls);
+                await server.RunAsync(Configurations.Urls);
+            }
 		}
 	}
 }

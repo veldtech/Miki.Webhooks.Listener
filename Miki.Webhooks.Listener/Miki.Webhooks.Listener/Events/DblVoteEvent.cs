@@ -71,7 +71,7 @@ namespace Miki.Webhooks.Listener.Events
 									Name = "voter",
 									Rank = 0,
 									UnlockedAt = DateTime.Now,
-									Id = u.Id
+									UserId = u.Id
 								};
 								unlockedAchievement = true;
 							}

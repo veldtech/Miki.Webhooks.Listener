@@ -10,14 +10,6 @@ namespace Miki.Webhooks.Listener
 {
 	public class WebhookContext : MikiDbContext
 	{
-		public DbSet<Achievement> Achievements { get; set; }
-		public DbSet<DonatorKey> DonatorKey { get; set; }
-		public DbSet<User> Users { get; set; }
-
-		public WebhookContext()
-		{
-		}
-
 		protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 		{
 			base.OnConfiguring(optionsBuilder);
