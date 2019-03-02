@@ -53,9 +53,12 @@ namespace Miki.Webhooks.Listener.Events
 					if (!await redisClient.ExistsAsync($"dbl:vote:{voteObject.UserId}"))
 					{
 						u.DblVotes++;
-						await redisClient.UpsertAsync($"dbl:vote:{voteObject.UserId}", 1, new TimeSpan(1, 0, 0, 0));
+                        int streak = await redisClient.GetAsync<int>($"dbl:vote:{voteObject.UserId}");
+                        streak++;
 
-						int addedCurrency = 100 * (await u.IsDonatorAsync(context) ? DonatorModifier : 1);
+						await redisClient.UpsertAsync($"dbl:vote:{voteObject.UserId}", streak, new TimeSpan(1, 0, 0, 0));
+
+						int addedCurrency = (100 * (await u.IsDonatorAsync(context) ? DonatorModifier : 1)) * Math.Min(100, streak);
 
 						u.Currency += addedCurrency;
 
@@ -97,7 +100,7 @@ namespace Miki.Webhooks.Listener.Events
 							{
 								embed = new EmbedBuilder()
 									.SetTitle("🎉 Thank you for voting!")
-									.SetDescription($"You have been granted 🔸{addedCurrency}")
+									.SetDescription($"You have been granted 🔸{addedCurrency}\n{(streak > 1 ? $"🔥 You're on a {streak} day streak!" : "")}")
 									.SetColor(221, 46, 68)
 									.ToEmbed()
 							});
