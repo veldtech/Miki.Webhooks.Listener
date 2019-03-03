@@ -65,8 +65,7 @@ namespace Miki.Webhooks.Listener.Events
                     StreakObject streakObj = await redisClient.GetAsync<StreakObject>($"dbl:vote:{voteObject.UserId}");
                     if (streakObj == null)
                     {
-                        int streak = await redisClient.GetAsync<int>($"dbl:vote:{voteObject.UserId}");
-                        streakObj = new StreakObject { Streak = streak, TimeStreak = DateTime.MinValue }; 
+                        streakObj = new StreakObject { Streak = 0, TimeStreak = DateTime.MinValue }; 
                     }
 
                     if (streakObj.TimeStreak < DateTime.UtcNow.AddHours(-11))
@@ -75,6 +74,7 @@ namespace Miki.Webhooks.Listener.Events
                     }
 
                     streakObj.Streak++;
+                    streakObj.TimeStreak = DateTime.UtcNow;
 
                     await redisClient.UpsertAsync($"dbl:vote:{voteObject.UserId}", streakObj, new TimeSpan(24, 0, 0));
 
