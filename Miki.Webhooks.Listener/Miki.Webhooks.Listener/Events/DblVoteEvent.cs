@@ -1,6 +1,7 @@
 ﻿using Miki.Cache;
 using Miki.Configuration;
 using Miki.Discord;
+using Miki.Logging;
 using Miki.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -68,8 +69,9 @@ namespace Miki.Webhooks.Listener.Events
                         streakObj = new StreakObject { Streak = 0, TimeStreak = DateTime.MinValue }; 
                     }
 
-                    if (streakObj.TimeStreak < DateTime.UtcNow.AddHours(-11))
+                    if (streakObj.TimeStreak > DateTime.UtcNow.AddHours(-11))
                     {
+                        Log.Warning($"Event of type {nameof(DblVoteEvent)} rejected.");
                         return;
                     }
 
