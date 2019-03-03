@@ -4,6 +4,7 @@ using Miki.Discord;
 using Miki.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using ProtoBuf;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -23,9 +24,13 @@ namespace Miki.Webhooks.Listener.Events
         public string Type;
     }
 
+    [ProtoContract]
     public class StreakObject
     {
+        [ProtoMember(1)]
         public DateTime TimeStreak { get; set; } = DateTime.Now;
+
+        [ProtoMember(2)]
         public int Streak { get; set; } = 1;
     }
 
