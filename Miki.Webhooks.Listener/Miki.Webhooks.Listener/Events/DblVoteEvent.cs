@@ -81,12 +81,9 @@ namespace Miki.Webhooks.Listener.Events
                     await redisClient.UpsertAsync($"dbl:vote:{voteObject.UserId}", streakObj, new TimeSpan(24, 0, 0));
 
                     int addedCurrency = (100 * (await u.IsDonatorAsync(context) ? DonatorModifier : 1)) * Math.Min(100, streakObj.Streak);
-
                     u.Currency += addedCurrency;
 
                     Achievement achievement = await context.Achievements.FindAsync(u.Id, "voter");
-                    bool unlockedAchievement = false;
-
                     switch (u.DblVotes)
                     {
                         case 1:
@@ -98,17 +95,26 @@ namespace Miki.Webhooks.Listener.Events
                                 UnlockedAt = DateTime.Now,
                                 UserId = u.Id
                             };
-                            unlockedAchievement = true;
                         } break;
                         case 25:
                         {
-                            achievement.Rank = 1;
-                            unlockedAchievement = true;
+                            achievement = new Achievement()
+                            {
+                                Name = "voter",
+                                Rank = 1,
+                                UnlockedAt = DateTime.Now,
+                                UserId = u.Id
+                            };
                         } break;
                         case 200:
                         {
-                            achievement.Rank = 2;
-                            unlockedAchievement = true;
+                            achievement = new Achievement()
+                            {
+                                Name = "voter",
+                                Rank = 2,
+                                UnlockedAt = DateTime.Now,
+                                UserId = u.Id
+                            };
                         } break;
                     }
 
