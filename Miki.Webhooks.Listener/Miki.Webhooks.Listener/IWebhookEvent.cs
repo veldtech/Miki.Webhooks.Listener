@@ -2,10 +2,12 @@
 
 namespace Miki.Webhooks.Listener
 {
+    using System;
+
     public interface IWebhookEvent
     {
 		string[] AcceptedUrls { get; }
 
-		Task OnMessage(string json);
+		Task OnMessage(string json, IServiceProvider provider);
     }
 }

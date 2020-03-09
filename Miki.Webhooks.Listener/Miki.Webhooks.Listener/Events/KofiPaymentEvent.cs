@@ -1,19 +1,21 @@
-﻿using Miki.Configuration;
-using Miki.Discord;
-using Miki.Discord.Common;
-using Miki.Models;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Miki.Webhooks.Listener
+﻿namespace Miki.Webhooks.Listener
 {
-	public class KofiPaymentEvent : IWebhookEvent
+    using Microsoft.Extensions.DependencyInjection;
+    using Miki.Configuration;
+    using Miki.Discord;
+    using Miki.Discord.Common;
+    using Miki.Models;
+    using Newtonsoft.Json;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Threading.Tasks;
+    using Microsoft.EntityFrameworkCore;
+    using Miki.Bot.Models;
+
+    public class KofiPaymentEvent : IWebhookEvent
 	{
-		public class KofiObject
+        public class KofiObject
 		{
 			[JsonProperty("message_id")]
 			public Guid MessageId;
@@ -42,7 +44,7 @@ namespace Miki.Webhooks.Listener
 
 		public string[] AcceptedUrls => new[] { "kofi" };
 
-		public async Task OnMessage(string json)
+        public async Task OnMessage(string json, IServiceProvider services)
 		{
 			if(json.StartsWith("data="))
 			{
@@ -53,44 +55,47 @@ namespace Miki.Webhooks.Listener
 			int rewardedKeys = (int)Math.Floor(kofi.Amount / 3);
 
 			if (ulong.TryParse(kofi.Message.Split(' ').Last(), out ulong uid))
-			{
+            {
+                await using var context = services.GetService<DbContext>();
 
-				using (var context = new WebhookContext())
-				{
-					while (rewardedKeys > 0)
-					{
-						List<string> keys = new List<string>();
+                while(rewardedKeys > 0)
+                {
+                    List<string> keys = new List<string>();
 
-						for (int i = 0; i < Math.Min(10, rewardedKeys); i++)
-						{
-							var key = (await context.DonatorKey.AddAsync(new DonatorKey
-							{
-								StatusTime = TimeSpan.FromDays(31)
-							})).Entity;
+                    for (int i = 0; i < Math.Min(10, rewardedKeys); i++)
+                    {
+                        var key = (await context.Set<DonatorKey>().AddAsync(new DonatorKey
+                        {
+                            StatusTime = TimeSpan.FromDays(31),
+                            Key = Guid.NewGuid()
+                        })).Entity;
 
-							await context.SaveChangesAsync();
+                        await context.SaveChangesAsync();
 
-							keys.Add(key.Key.ToString());
-						}
+                        keys.Add(key.Key.ToString());
+                    }
 
-						rewardedKeys -= keys.Count;
+                    rewardedKeys -= keys.Count;
 
-						var channel = await Program.Discord.CreateDMChannelAsync(uid);
-						await Program.Discord.SendMessageAsync(channel.Id, new MessageArgs
-						{
-							embed = new EmbedBuilder()
-							{
-								Title = "🎉 You donated through Kofi!",
-								Description = "From the bottom of my heart, I want to thank you for supporting my hobby and my passion project!\n\nWith love, Veld#0001"
-							}.SetColor(221, 46, 68)
-							.AddField("Here are your key(s)!", "\n```\n" + string.Join("\n", keys) + "```")
-							.AddField("How to redeem this key?", $"use this command `>redeemkey`")
-							.ToEmbed()
-						});
-						await Task.Delay(1000);
-					}
-				}
-			}
+                    var apiClient = services.GetService<IApiClient>();
+                    var channel = await apiClient.CreateDMChannelAsync(uid);
+                    await apiClient.SendMessageAsync(channel.Id,
+                        new MessageArgs
+                        {
+                            Embed = new EmbedBuilder()
+                                {
+                                    Title = "🎉 You donated through Kofi!",
+                                    Description =
+                                        "From the bottom of my heart, I want to thank you for supporting my hobby and my passion project!\n\nWith love, Veld#0001"
+                                }.SetColor(221, 46, 68)
+                                .AddField("Here are your key(s)!",
+                                    "\n```\n" + string.Join("\n", keys) + "```")
+                                .AddField("How to redeem this key?", "use this command `>redeemkey`")
+                                .ToEmbed()
+                        });
+                    await Task.Delay(2000);
+                }
+            }
 		}
 	}
 }

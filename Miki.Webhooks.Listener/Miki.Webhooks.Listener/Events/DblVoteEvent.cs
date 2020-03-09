@@ -1,28 +1,29 @@
-﻿using Miki.Cache;
-using Miki.Configuration;
-using Miki.Discord;
-using Miki.Logging;
-using Miki.Models;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using ProtoBuf;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Miki.Webhooks.Listener.Events
+﻿namespace Miki.Webhooks.Listener.Events
 {
+    using Miki.Cache;
+    using Miki.Configuration;
+    using Miki.Discord;
+    using Miki.Discord.Common;
+    using Miki.Logging;
+    using Miki.Models;
+    using Newtonsoft.Json;
+    using ProtoBuf;
+    using System;
+    using System.Threading.Tasks;
+    using Microsoft.EntityFrameworkCore;
+    using Microsoft.Extensions.DependencyInjection;
+    using Miki.Bot.Models;
+
     public class DblVoteObject
     {
-        [JsonProperty("bot")]
-        public ulong BotId;
+        [JsonProperty("bot")] 
+        public ulong BotId { get; set; }
 
-        [JsonProperty("user")]
-        public ulong UserId;
+        [JsonProperty("user")] 
+        public ulong UserId { get; set; }
 
-        [JsonProperty("type")]
-        public string Type;
+        [JsonProperty("type")] 
+        public string Type { get; set; }
     }
 
     [ProtoContract]
@@ -43,96 +44,103 @@ namespace Miki.Webhooks.Listener.Events
         [Configurable]
         public int DonatorModifier { get; set; } = 2;
 
-        public string[] AcceptedUrls => new[] { "dbl_vote" };
+        public string[] AcceptedUrls => new[] {"dbl_vote"};
 
-        private ICacheClient redisClient;
-
-        public DblVoteEvent(ICacheClient cacheClient)
+        public async Task OnMessage(string json, IServiceProvider services)
         {
-            redisClient = cacheClient;
-        }
+            await using var context = services.GetService<DbContext>();
 
-        public async Task OnMessage(string json)
-        {
-            using (var context = new WebhookContext())
+            var voteObject = JsonConvert.DeserializeObject<DblVoteObject>(json);
+            if(voteObject.Type == "upvote")
             {
-                DblVoteObject voteObject = JsonConvert.DeserializeObject<DblVoteObject>(json);
+                var user = await context.Set<User>().FindAsync((long) voteObject.UserId);
+                user.DblVotes++;
 
-                if (voteObject.Type == "upvote")
+                var cacheClient = services.GetService<ICacheClient>();
+
+                StreakObject streakObj =
+                    await cacheClient.GetAsync<StreakObject>($"dbl:vote:{voteObject.UserId}");
+                if(streakObj == null)
                 {
-                    User u = await context.Users.FindAsync((long)voteObject.UserId);
-                    u.DblVotes++;
-
-                    StreakObject streakObj = await redisClient.GetAsync<StreakObject>($"dbl:vote:{voteObject.UserId}");
-                    if (streakObj == null)
+                    streakObj = new StreakObject
                     {
-                        streakObj = new StreakObject { Streak = 0, TimeStreak = DateTime.MinValue }; 
+                        Streak = 0, 
+                        TimeStreak = DateTime.MinValue
+                    };
+                }
+
+                if(streakObj.TimeStreak > DateTime.UtcNow.AddHours(-11))
+                {
+                    Log.Warning($"Event of type {nameof(DblVoteEvent)} rejected.");
+                    return;
+                }
+
+                streakObj.Streak++;
+                streakObj.TimeStreak = DateTime.UtcNow;
+
+                await cacheClient.UpsertAsync(
+                    $"dbl:vote:{voteObject.UserId}", streakObj, new TimeSpan(24, 0, 0));
+
+                var isDonator = await user.IsDonatorAsync(context);
+
+                int addedCurrency = 100 * (isDonator ? DonatorModifier : 1) 
+                                        * Math.Min(100, streakObj.Streak);
+                user.Currency += addedCurrency;
+
+                switch(user.DblVotes)
+                {
+                    case 1:
+                    {
+                        await context.AddAsync(new Achievement
+                        {
+                            Name = "voter",
+                            Rank = 0,
+                            UnlockedAt = DateTime.Now,
+                            UserId = user.Id
+                        });
                     }
-
-                    if (streakObj.TimeStreak > DateTime.UtcNow.AddHours(-11))
+                        break;
+                    case 25:
                     {
-                        Log.Warning($"Event of type {nameof(DblVoteEvent)} rejected.");
-                        return;
+                        await context.AddAsync(new Achievement
+                        {
+                            Name = "voter",
+                            Rank = 1,
+                            UnlockedAt = DateTime.Now,
+                            UserId = user.Id
+                        });
                     }
-
-                    streakObj.Streak++;
-                    streakObj.TimeStreak = DateTime.UtcNow;
-
-                    await redisClient.UpsertAsync($"dbl:vote:{voteObject.UserId}", streakObj, new TimeSpan(24, 0, 0));
-
-                    int addedCurrency = (100 * (await u.IsDonatorAsync(context) ? DonatorModifier : 1)) * Math.Min(100, streakObj.Streak);
-                    u.Currency += addedCurrency;
-
-                    Achievement achievement = await context.Achievements.FindAsync(u.Id, "voter");
-                    switch (u.DblVotes)
+                        break;
+                    case 200:
                     {
-                        case 1:
+                        await context.AddAsync(new Achievement
                         {
-                            achievement = new Achievement()
-                            {
-                                Name = "voter",
-                                Rank = 0,
-                                UnlockedAt = DateTime.Now,
-                                UserId = u.Id
-                            };
-                        } break;
-                        case 25:
-                        {
-                            achievement = new Achievement()
-                            {
-                                Name = "voter",
-                                Rank = 1,
-                                UnlockedAt = DateTime.Now,
-                                UserId = u.Id
-                            };
-                        } break;
-                        case 200:
-                        {
-                            achievement = new Achievement()
-                            {
-                                Name = "voter",
-                                Rank = 2,
-                                UnlockedAt = DateTime.Now,
-                                UserId = u.Id
-                            };
-                        } break;
+                            Name = "voter",
+                            Rank = 2,
+                            UnlockedAt = DateTime.Now,
+                            UserId = user.Id
+                        });
                     }
+                        break;
+                }
 
-                    var channel = await Program.Discord.CreateDMChannelAsync(voteObject.UserId);
-                    if (channel != null)
-                    {
-                        await Program.Discord.SendMessageAsync(channel.Id, new Discord.Common.MessageArgs
+                var apiClient = services.GetService<IApiClient>();
+                var channel = await apiClient.CreateDMChannelAsync(voteObject.UserId);
+                if(channel != null)
+                {
+                    await apiClient.SendMessageAsync(channel.Id,
+                        new MessageArgs
                         {
-                            embed = new EmbedBuilder()
+                            Embed = new EmbedBuilder()
                                 .SetTitle("🎉 Thank you for voting!")
-                                .SetDescription($"You have been granted 🔸{addedCurrency}\n{(streakObj.Streak > 1 ? $"🔥 You're on a {streakObj.Streak} day streak!" : "")}")
+                                .SetDescription(
+                                    $"You have been granted 🔸{addedCurrency}\n{(streakObj.Streak > 1 ? $"🔥 You're on a {streakObj.Streak} day streak!" : "")}")
                                 .SetColor(221, 46, 68)
                                 .ToEmbed()
                         });
-                    }
-
-                    await context.SaveChangesAsync();
                 }
+
+                await context.SaveChangesAsync();
             }
         }
     }

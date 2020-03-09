@@ -9,11 +9,10 @@ namespace Miki.Webhooks.Listener.Events
 	{
 		public string[] AcceptedUrls => new[] { "test" };
 
-		public Task OnMessage(string json)
+		public Task OnMessage(string json, IServiceProvider _)
 		{
 			Console.WriteLine(json);
-
-			return Task.CompletedTask;
+            return Task.CompletedTask;
 		}
 	}
 }

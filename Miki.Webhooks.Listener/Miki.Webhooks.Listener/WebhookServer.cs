@@ -1,29 +1,30 @@
-﻿using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Miki.Configuration;
-using Miki.Logging;
-using Newtonsoft.Json;
-using Sentry;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Web;
-
-namespace Miki.Webhooks.Listener
+﻿namespace Miki.Webhooks.Listener
 {
-	public class WebhookServer
+    using Microsoft.AspNetCore.Builder;
+    using Microsoft.AspNetCore.Hosting;
+    using Microsoft.AspNetCore.Http;
+    using Miki.Configuration;
+    using Miki.Logging;
+    using Newtonsoft.Json;
+    using Sentry;
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+    using System.Web;
+	using Microsoft.Extensions.DependencyInjection;
+
+    public class WebhookServer
 	{
 		public class WebhookResponse
 		{
 			[JsonProperty("success")]
-			public bool Success = false;
+			public bool Success;
 
 			[JsonProperty("error")]
-			public string Error = null;
+			public string Error;
 
 			public static WebhookResponse AsError(string errorMessage)
 				=> new WebhookResponse { Error = errorMessage };
@@ -36,24 +37,24 @@ namespace Miki.Webhooks.Listener
 				=> JsonConvert.SerializeObject(AsSuccess());
 		}
 
-		private Dictionary<string, IWebhookEvent> _allWebhookEvents= new Dictionary<string, IWebhookEvent>();
-		private ConfigurationManager _configuration = new ConfigurationManager();
+		private readonly Dictionary<string, IWebhookEvent> allWebhookEvents 
+            = new Dictionary<string, IWebhookEvent>();
+		private readonly ConfigurationManager configuration = new ConfigurationManager();
 
-		private readonly string AuthKey = null;
+		private readonly string authKey;
+        private readonly IServiceProvider services;
 
-		public WebhookServer()
-		{
-		}
-		public WebhookServer(string key)
-		{
-			AuthKey = key;
-		}
+        public WebhookServer(string key, IServiceProvider services)
+        {
+            authKey = key;
+            this.services = services;
+        }
 
 		public void AddWebhookRoute(IWebhookEvent ev)
 		{
 			foreach (var x in ev.AcceptedUrls)
 			{
-				_allWebhookEvents.Add(x, ev);
+				allWebhookEvents.Add(x, ev);
 			}
 		}
 
@@ -61,12 +62,12 @@ namespace Miki.Webhooks.Listener
 		{
 			if (File.Exists("./config.json"))
 			{
-				await _configuration.ImportAsync(
+				await configuration.ImportAsync(
 					new JsonSerializationProvider(),
 					"./config.json");
 			}
 
-			await _configuration.ExportAsync(
+			await configuration.ExportAsync(
 				new JsonSerializationProvider(),
 				"./config.json");
 
@@ -99,15 +100,13 @@ namespace Miki.Webhooks.Listener
 					return;
 				}
 
-				string type = null;
-
-				if (!context.Request.Query.TryGetValue("type", out var value))
+                if (!context.Request.Query.TryGetValue("type", out var value))
 				{
 					await context.Response.WriteAsync(WebhookResponse.AsErrorJson("no webhook type defined."));
 					return;
 				}
 
-				if (AuthKey != null)
+				if (authKey != null)
 				{
 					if (!context.Request.Query.TryGetValue("key", out var auth))
 					{
@@ -115,16 +114,15 @@ namespace Miki.Webhooks.Listener
 						return;
 					}
 
-					if(auth != AuthKey)
+					if(auth != authKey)
 					{
 						await context.Response.WriteAsync(WebhookResponse.AsErrorJson("unauthorized."));
 						return;
 					}
 				}
 
-				type = value.FirstOrDefault();
-
-				if(!_allWebhookEvents.TryGetValue(type, out var ev))
+				var type = value.FirstOrDefault();
+                if(!allWebhookEvents.TryGetValue(type, out var ev))
 				{
 					await context.Response.WriteAsync(WebhookResponse.AsErrorJson("type was not found."));
 					return;
@@ -136,9 +134,10 @@ namespace Miki.Webhooks.Listener
 
 				Log.Debug($"Webhook accepted with type '{type}' with data '{json}'.");
 
+
 				try
 				{
-					await ev.OnMessage(json);
+                    await ev.OnMessage(json, services);
 				}
 				catch(Exception e)
 				{
