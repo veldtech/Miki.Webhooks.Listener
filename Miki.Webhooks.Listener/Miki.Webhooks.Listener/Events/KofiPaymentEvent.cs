@@ -46,7 +46,12 @@
 
         public async Task OnMessage(string json, IServiceProvider services)
 		{
-			if(json.StartsWith("data="))
+            using var scope = services.CreateScope();
+            var service = scope.ServiceProvider;
+
+            await using var context = service.GetService<DbContext>();
+
+            if(json.StartsWith("data="))
 			{
 				json = json.Substring(5);
 			}
@@ -56,8 +61,6 @@
 
 			if (ulong.TryParse(kofi.Message.Split(' ').Last(), out ulong uid))
             {
-                await using var context = services.GetService<DbContext>();
-
                 while(rewardedKeys > 0)
                 {
                     List<string> keys = new List<string>();
@@ -77,7 +80,7 @@
 
                     rewardedKeys -= keys.Count;
 
-                    var apiClient = services.GetService<IApiClient>();
+                    var apiClient = service.GetService<IApiClient>();
                     var channel = await apiClient.CreateDMChannelAsync(uid);
                     await apiClient.SendMessageAsync(channel.Id,
                         new MessageArgs

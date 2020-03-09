@@ -46,7 +46,10 @@
             IEnumerable<PatreonUserReward> paymentEvents,
             IServiceProvider services)
         {
-            await using var context = services.GetService<DbContext>();
+            using var scope = services.CreateScope();
+            var service = scope.ServiceProvider;
+
+            await using var context = service.GetService<DbContext>();
             foreach(var reward in paymentEvents)
             {
                 while(reward.KeysRewarded > 0)
@@ -76,7 +79,7 @@
 
                     try
                     {
-                        var apiClient = services.GetService<IApiClient>();
+                        var apiClient = service.GetService<IApiClient>();
                         var channel = await apiClient.CreateDMChannelAsync(reward.UserId);
                         await apiClient.SendMessageAsync(channel.Id, new MessageArgs
                         {

@@ -48,7 +48,10 @@
 
         public async Task OnMessage(string json, IServiceProvider services)
         {
-            await using var context = services.GetService<DbContext>();
+            using var scope = services.CreateScope();
+            var service = scope.ServiceProvider;
+
+            await using var context = service.GetService<DbContext>();
 
             var voteObject = JsonConvert.DeserializeObject<DblVoteObject>(json);
             if(voteObject.Type == "upvote")
@@ -56,7 +59,7 @@
                 var user = await context.Set<User>().FindAsync((long) voteObject.UserId);
                 user.DblVotes++;
 
-                var cacheClient = services.GetService<ICacheClient>();
+                var cacheClient = service.GetService<ICacheClient>();
 
                 StreakObject streakObj =
                     await cacheClient.GetAsync<StreakObject>($"dbl:vote:{voteObject.UserId}");
@@ -124,7 +127,7 @@
                         break;
                 }
 
-                var apiClient = services.GetService<IApiClient>();
+                var apiClient = service.GetService<IApiClient>();
                 var channel = await apiClient.CreateDMChannelAsync(voteObject.UserId);
                 if(channel != null)
                 {
