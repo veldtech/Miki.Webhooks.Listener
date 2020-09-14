@@ -58,7 +58,7 @@
 			}
 		}
 
-		public async Task RunAsync(string[] urls)
+		public async Task RunAsync()
 		{
 			if (File.Exists("./config.json"))
 			{
@@ -73,7 +73,7 @@
 
 			var host = new WebHostBuilder()
 				.UseKestrel()
-				.UseUrls(urls)
+				.UseUrls("http://0.0.0.0:5000")
 				.Configure(
 					app => app.Map("/submit", SubmissionHandler)
 						.Map("/ping", PingHandler)

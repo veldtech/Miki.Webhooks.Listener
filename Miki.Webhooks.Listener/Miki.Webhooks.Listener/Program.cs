@@ -27,7 +27,12 @@
 			if(!File.Exists("./database.json"))
             {
                 await using var sw = File.CreateText("./database.json");
-                string s = JsonConvert.SerializeObject(new WebhookConfiguration());
+                string s = JsonConvert.SerializeObject(new WebhookConfiguration(
+                    Environment.GetEnvironmentVariable("RedisConnectionString"),
+                    Environment.GetEnvironmentVariable("DatabaseConnectionString"), 
+                    Environment.GetEnvironmentVariable("AuthenticationString"), 
+                    Environment.GetEnvironmentVariable("SentryDsn"), 
+                    Environment.GetEnvironmentVariable("BotToken")));
                 await sw.WriteAsync(s);
                 sw.Close();
             }
@@ -57,7 +62,7 @@
                 server.AddWebhookRoute(new PatreonPaymentEvent());
                 server.AddWebhookRoute(new DblVoteEvent());
                 server.AddWebhookRoute(new KofiPaymentEvent());
-                await server.RunAsync(Configurations.Urls);
+                await server.RunAsync();
             }
 		}
 	}

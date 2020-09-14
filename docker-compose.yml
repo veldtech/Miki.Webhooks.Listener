@@ -1,0 +1,12 @@
+version: '3'
+services:
+  webhook_listener:
+    build: 
+        context: Miki.Webhooks.Listener
+        dockerfile: Miki.Webhooks.Listener/Dockerfile
+    container_name: "webhook_listener"
+    env_file:
+        - .env
+    ports:
+        - "5000:5000"
+        - "5005:5005"
