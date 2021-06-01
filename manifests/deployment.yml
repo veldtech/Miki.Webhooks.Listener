@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webhooks-listener
+  labels:
+    app: webhooks-listener
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: webhooks-listener
+  template:
+    metadata:
+      labels:
+        app: webhooks-listener
+    spec:
+      containers:
+        - name: webhooks-listener-container
+          image: docker.pkg.github.com/mikibot/miki.webhooks.listener/listener:0
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 5000
+          env:
+            - name: RedisConnectionString
+              valueFrom:
+                secretKeyRef:
+                  name: webhook-secrets
+                  key: redis
+            - name: DatabaseConnectionString
+              valueFrom:
+                secretKeyRef:
+                  name: webhook-secrets
+                  key: database
+            - name: AuthenticationString
+              valueFrom:
+                secretKeyRef:
+                  name: webhook-secrets
+                  key: key
+            - name: SentryDsn
+              valueFrom:
+                secretKeyRef:
+                  name: webhook-secrets
+                  key: sentryDsn
+            - name: BotToken
+              valueFrom:
+                secretKeyRef:
+                  name: webhook-secrets
+                  key: token
