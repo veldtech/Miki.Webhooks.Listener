@@ -3,10 +3,10 @@ WORKDIR /app
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1-buster AS build
 WORKDIR /src
 EXPOSE 5000
-COPY ["Miki.Webhooks.Listener/Miki.Webhooks.Listener.csproj", "Miki.Webhooks.Listener/"]
-COPY ["Miki.Bot.Models/Miki.Bot.Models.csproj", "Miki.Bot.Models/"]
+COPY ["Miki.Webhooks.Listener/Miki.Webhooks.Listener/Miki.Webhooks.Listener.csproj", "Miki.Webhooks.Listener/"]
+COPY ["Miki.Webhooks.Listener/Miki.Bot.Models/Miki.Bot.Models.csproj", "Miki.Bot.Models/"]
 RUN dotnet restore "Miki.Webhooks.Listener/Miki.Webhooks.Listener.csproj"
-COPY . .
+COPY ["Miki.Webhooks.Listener/", "."]
 WORKDIR "/src/Miki.Webhooks.Listener"
 RUN dotnet build "Miki.Webhooks.Listener.csproj" -c Release -o /app/build
 
