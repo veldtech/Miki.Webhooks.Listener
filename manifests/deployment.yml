@@ -19,7 +19,7 @@ spec:
           image: docker.pkg.github.com/mikibot/miki.webhooks.listener/listener:0
           resources:
             limits:
-              memory: "128Mi"
+              memory: "512Mi"
               cpu: "500m"
           ports:
             - containerPort: 5000
