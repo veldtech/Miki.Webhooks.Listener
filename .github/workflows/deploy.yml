@@ -16,7 +16,7 @@ jobs:
           image-name: listener
           image-tag: ${{ github.run_id }}
           context-dir: Miki.Webhooks.Listener
-          dockerfile-path: Miki.Webhooks.Listener/Dockerfile
+          dockerfile-path: Miki.Webhooks.Listener/Miki.Webhooks.Listener/Dockerfile
   deploy:
     runs-on: ubuntu-latest
     needs: [build]
