@@ -1,12 +1,12 @@
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  name: imghoard-ingress
+  name: webhooks-listener-ingress
 spec:
   routes:
     - match: Host(`webhooks.miki.bot`)
       kind: Rule
       services:
         - kind: Service
-          name: imghoard
+          name: webhooks-listener
           port: 80
