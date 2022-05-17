@@ -91,7 +91,7 @@
                                 .AddField("Here are your key(s)!",
                                     "\n```\n" + string.Join("\n", keys) + "```")
                                 .AddField("How to redeem this key?", 
-                                    "use this command `>redeemkey` to get your donator privileges, or `>sellkey` to get mekos!")
+                                    "use this command `/donator redeemkey` to get your donator privileges, or `/donator sellkey` to get mekos!")
                                 .ToEmbed()
                         });
                     }

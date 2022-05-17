@@ -93,7 +93,7 @@
                                 }.SetColor(221, 46, 68)
                                 .AddField("Here are your key(s)!",
                                     "\n```\n" + string.Join("\n", keys) + "```")
-                                .AddField("How to redeem this key?", "use this command `>redeemkey`")
+                                .AddField("How to redeem this key?", "use this command `/donator redeemkey`")
                                 .ToEmbed()
                         });
                     await Task.Delay(2000);
