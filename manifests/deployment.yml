@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: webhooks-listener-container
-          image: docker.pkg.github.com/mikibot/miki.webhooks.listener/listener:0
+          image: docker.pkg.github.com/veldtech/miki.webhooks.listener/listener:0
           resources:
             limits:
               memory: "512Mi"
